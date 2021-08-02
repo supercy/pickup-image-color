@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="wrap">
+    </div>
+    <script>
+        // getMainColor("./微信截图_20210802165319.png");
+
+        function getMainColor(image) {
+            return new Promise((resolve, reject) => {
+                try {
+                    const canvas = document.createElement("canvas");
+                    const img = new Image(); // 创建img元素
+                    img.src = image; // 设置图片源地址
+                    img.onload = () => {
+                        let color = getImageColor(canvas, img);
+                        resolve(color);
+                    };
+                } catch (e) {
+                    reject(e);
+                }
+            });
+        }
+
+        function getImageColor(canvas, img) {
+            const context = canvas.getContext("2d");
+            context.drawImage(img, 0, 0);
+
+            // 获取像素数据
+            let pixelData = context.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            ).data;
+            console.log("pixelData", pixelData);
+            return getCountsArr(pixelData);
+        }
+        function getCountsArr(pixelData) {
+            let colorList = [];
+            let rgba = [];
+            let rgbaStr = "";
+            // 分组循环
+            for (let i = 0; i < pixelData.length; i += 4) {
+                rgba[0] = pixelData[i];
+                rgba[1] = pixelData[i + 1];
+                rgba[2] = pixelData[i + 2];
+                rgba[3] = pixelData[i + 3];
+
+                if (rgba.indexOf(undefined) !== -1 || pixelData[i + 3] === 0) {
+                    continue;
+                }
+                // console.log("rgba", rgba);
+                rgbaStr = rgba.join(",");
+                if (rgbaStr in colorList) {
+                    ++colorList[rgbaStr];
+                } else {
+                    colorList[rgbaStr] = 1;
+                }
+            }
+            // console.log("colorList", colorList);
+            let arr = [];
+            for (let prop in colorList) {
+                arr.push({
+                    // 如果只获取rgb,则为`rgb(${prop})`
+                    color: `rgba(${prop})`,
+                    count: colorList[prop],
+                });
+            }
+            // 数组排序
+            arr.sort((a, b) => {
+                return b.count - a.count;
+            });
+            console.log("arr", arr);
+            return arr;
+        }
+        
+
+        getMainColor("./微信截图_20210802165319.png").then(arr => {
+            const frag = document.createDocumentFragment();
+            for (let index = 0; index < 20; index++) {
+                let div = document.createElement("div");
+                div.style.background = arr[index].color;
+                frag.appendChild(div)
+            }
+            document.getElementsByClassName("wrap")[0].appendChild(frag)
+
+        })
+
+
+
+
+    </script>
+</body>
+<style>
+    .wrap {
+        height: 95vh;
+        display: flex;
+        flex-direction: row;
+    }
+
+    .wrap div {
+        width: 50%;
+        height: 100%;
+    }
+</style>
+
+</html>
